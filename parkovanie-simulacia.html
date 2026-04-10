@@ -1,0 +1,1322 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulácia parkovania – Hlaváčikova & Veternicová</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, sans-serif; background: #f5f5f0; color: #1a1a2e; font-size: 14px; }
+
+  header {
+    background: #1a1a2e;
+    color: #fff;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  header h1 { font-size: 16px; font-weight: 600; }
+  header span { font-size: 12px; color: #aaa; }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 280px 1fr 300px;
+    height: calc(100vh - 48px);
+    overflow: hidden;
+  }
+
+  /* LEFT PANEL */
+  .panel-left {
+    background: #fff;
+    border-right: 1px solid #ddd;
+    overflow-y: auto;
+    padding: 16px;
+  }
+  .panel-left h2 { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #555; margin-bottom: 10px; }
+
+  .scenario-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 20px; }
+  .scenario-btn {
+    background: #f0f0f0;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    padding: 8px 10px;
+    cursor: pointer;
+    text-align: left;
+    font-size: 12px;
+    transition: background .15s;
+  }
+  .scenario-btn:hover { background: #e0eaff; border-color: #7090d0; }
+  .scenario-btn.active { background: #1a1a2e; color: #fff; border-color: #1a1a2e; }
+  .scenario-btn .sname { font-weight: 600; display: block; margin-bottom: 2px; }
+  .scenario-btn .sdesc { color: #666; font-size: 11px; }
+  .scenario-btn.active .sdesc { color: #aaa; }
+
+  .param-section { margin-bottom: 16px; }
+  .param-section label { display: flex; flex-direction: column; gap: 3px; font-size: 12px; margin-bottom: 8px; }
+  .param-section label span { color: #444; font-weight: 500; }
+  input[type=range] { width: 100%; accent-color: #1a1a2e; }
+  .val { font-size: 11px; color: #777; text-align: right; }
+
+  .btn-primary {
+    width: 100%;
+    background: #1a1a2e;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 10px;
+    font-size: 13px;
+    cursor: pointer;
+    margin-top: 4px;
+    transition: background .15s;
+  }
+  .btn-primary:hover { background: #2d2d55; }
+  .btn-primary:disabled { background: #999; cursor: not-allowed; }
+  .btn-secondary {
+    width: 100%;
+    background: #eee;
+    color: #333;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    padding: 8px;
+    font-size: 12px;
+    cursor: pointer;
+    margin-top: 6px;
+  }
+  .btn-secondary:hover { background: #ddd; }
+
+  .sim-controls {
+    width: min(520px, 100%);
+    margin: 0 auto;
+    background: #fff;
+    border-radius: 8px;
+    padding: 10px 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.08);
+  }
+
+  .sim-actions {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr 1fr;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .sim-controls .btn-primary,
+  .sim-controls .btn-secondary {
+    width: 100%;
+    margin-top: 0;
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+
+  /* MAIN VIZ */
+  .panel-main {
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .time-bar {
+    background: #fff;
+    border-radius: 8px;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.08);
+  }
+  .time-display { font-size: 28px; font-weight: 700; font-variant-numeric: tabular-nums; min-width: 70px; }
+  .day-display { font-size: 12px; color: #666; }
+  .speed-ctrl { display: flex; align-items: center; gap: 6px; font-size: 12px; margin-left: auto; }
+  #simSpeed { width: 80px; }
+
+  .maps-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .map-card {
+    background: #fff;
+    border-radius: 8px;
+    padding: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.08);
+  }
+  .map-card h3 { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #555; margin-bottom: 8px; }
+  canvas { width: 100%; border-radius: 4px; cursor: pointer; }
+
+  .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .kpi {
+    background: #fff;
+    border-radius: 8px;
+    padding: 10px 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.08);
+  }
+  .kpi .kname { font-size: 11px; color: #777; margin-bottom: 4px; }
+  .kpi .kval { font-size: 22px; font-weight: 700; }
+  .kpi .kdelta { font-size: 11px; margin-top: 2px; }
+  .up { color: #d44; }
+  .down { color: #080; }
+
+  .kpi-guide {
+    background: #fff;
+    border-radius: 8px;
+    padding: 10px 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.08);
+    font-size: 12px;
+    color: #444;
+    line-height: 1.5;
+  }
+  .kpi-guide strong { color: #222; }
+  .kpi-guide .good { color: #0a7a2f; font-weight: 600; }
+  .kpi-guide .warn { color: #a4371f; font-weight: 600; }
+
+  /* RIGHT PANEL */
+  .panel-right {
+    background: #fff;
+    border-left: 1px solid #ddd;
+    overflow-y: auto;
+    padding: 16px;
+  }
+  .panel-right h2 { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #555; margin-bottom: 10px; }
+
+  .chart-wrap {
+    margin-bottom: 16px;
+  }
+  .chart-wrap h3 { font-size: 11px; color: #666; margin-bottom: 4px; font-weight: 500; }
+  canvas.hist { width: 100%; height: 80px; }
+  canvas.bar-chart { width: 100%; height: 100px; }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; font-size: 11px; }
+  .legend-item { display: flex; align-items: center; gap: 4px; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+  .event-log {
+    font-size: 11px;
+    line-height: 1.6;
+    color: #444;
+    max-height: 160px;
+    overflow-y: auto;
+    border: 1px solid #eee;
+    border-radius: 6px;
+    padding: 6px 8px;
+    background: #fafafa;
+  }
+  .event-log div { border-bottom: 1px solid #f0f0f0; padding: 2px 0; }
+  .event-log div:last-child { border-bottom: none; }
+  .ev-arr { color: #060; }
+  .ev-dep { color: #a00; }
+  .ev-wait { color: #a60; }
+  .ev-sys { color: #339; font-style: italic; }
+
+  .tooltip {
+    position: fixed;
+    background: rgba(20,20,40,.9);
+    color: #fff;
+    padding: 6px 10px;
+    border-radius: 5px;
+    font-size: 11px;
+    pointer-events: none;
+    display: none;
+    z-index: 100;
+  }
+
+  .progress-bar-wrap { background: #eee; border-radius: 4px; height: 6px; margin-top: 6px; }
+  .progress-bar-fill { height: 6px; border-radius: 4px; background: #1a1a2e; transition: width .3s; }
+
+  hr { border: none; border-top: 1px solid #eee; margin: 12px 0; }
+
+  @media (max-width: 920px) {
+    .sim-actions {
+      grid-template-columns: 1fr;
+    }
+    .kpi-guide {
+      font-size: 11px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Simulácia parkovania – Hlaváčikova &amp; Veternicová</h1>
+  <span>Karlova Ves, Bratislava · model agentov a miest</span>
+</header>
+
+<div class="layout">
+
+<!-- LEFT: Scenarios + params -->
+<div class="panel-left">
+  <h2>Scenáre</h2>
+  <div class="scenario-list" id="scenarioList"></div>
+
+  <hr>
+  <h2>Parametre</h2>
+  <div class="param-section">
+    <label>
+      <span>Počet parkovacích miest <small>(celkové)</small></span>
+      <input type="range" id="pTotalSpots" min="60" max="832" value="760" step="1">
+      <div class="val"><span id="vTotalSpots">760</span> miest</div>
+    </label>
+    <label>
+      <span>Z toho vyhradených (kusov)</span>
+      <input type="range" id="pReservedN" min="0" max="832" value="248" step="1">
+      <div class="val"><span id="vReservedN">248</span> miest</div>
+    </label>
+    <label>
+      <span>Počet domácností</span>
+      <input type="range" id="pHouseholds" min="100" max="1800" value="1200" step="10">
+      <div class="val"><span id="vHouseholds">1200</span> domácností</div>
+    </label>
+    <label>
+      <span>Podiel domácností s autom (%)</span>
+      <input type="range" id="pCarPct" min="20" max="100" value="65" step="5">
+      <div class="val"><span id="vCarPct">65</span> %</div>
+    </label>
+    <label>
+      <span>Podiel domácností s 2+ autami (%)</span>
+      <input type="range" id="pMultiCarPct" min="0" max="60" value="20" step="5">
+      <div class="val"><span id="vMultiCarPct">20</span> %</div>
+    </label>
+    <label>
+      <span>Dĺžka parkovania cez deň (hod, priemer)</span>
+      <input type="range" id="pDayDuration" min="0.5" max="10" value="3" step="0.5">
+      <div class="val"><span id="vDayDuration">3.0</span> h</div>
+    </label>
+    <label>
+      <span>Dĺžka parkovania cez noc (hod, priemer)</span>
+      <input type="range" id="pNightDuration" min="4" max="14" value="9" step="0.5">
+      <div class="val"><span id="vNightDuration">9.0</span> h</div>
+    </label>
+    <label>
+      <span>Vonkajší dopyt (% kapacity) – návštevníci</span>
+      <input type="range" id="pExternalDemand" min="0" max="80" value="20" step="5">
+      <div class="val"><span id="vExternalDemand">20</span> %</div>
+    </label>
+    <label>
+      <span>Nárast nočnej doby státia pri nedostatku miest (%)</span>
+      <input type="range" id="pReservedDurationBoost" min="0" max="100" value="30" step="5">
+      <div class="val"><span id="vReservedDurationBoost">30</span> %</div>
+    </label>
+  </div>
+
+</div>
+
+<!-- MAIN -->
+<div class="panel-main">
+  <div class="time-bar">
+    <div>
+      <div class="time-display" id="clockDisplay">08:00</div>
+      <div class="day-display" id="dayDisplay">Deň 1</div>
+    </div>
+    <div style="font-size:12px;color:#555;line-height:1.6;flex:1;padding-left:16px" id="phaseLabel">–</div>
+    <div class="speed-ctrl">
+      Rýchlosť:
+      <input type="range" id="simSpeed" min="1" max="120" value="6">
+      <span id="speedLabel">×6</span>
+    </div>
+  </div>
+
+  <div class="sim-controls">
+    <div class="sim-actions">
+      <button class="btn-primary" id="btnRun">▶ Spustiť simuláciu</button>
+      <button class="btn-secondary" id="btnPause">⏸ Pauza</button>
+      <button class="btn-secondary" id="btnReset">↺ Reset</button>
+    </div>
+    <div class="progress-bar-wrap" style="margin-top:10px">
+      <div class="progress-bar-fill" id="simProgress" style="width:0%"></div>
+    </div>
+    <div style="font-size:11px;color:#888;text-align:center;margin-top:4px" id="simDayLabel">Deň 0 / 14</div>
+  </div>
+
+  <div class="kpi-row">
+    <div class="kpi"><div class="kname">Obsadenosť (teraz: celkom / verejné)</div><div class="kval" id="kOcc">–</div><div class="kdelta" id="kOccPct">–</div></div>
+    <div class="kpi"><div class="kname">Vozidlá čakajúce / hľadajúce</div><div class="kval" id="kWaiting">–</div><div class="kdelta" id="kWaitPct">–</div></div>
+    <div class="kpi"><div class="kname">Priemerná doba hľadania (min)</div><div class="kval" id="kAvgSearch">–</div><div class="kdelta" id="kAvgSearchDelta">–</div></div>
+    <div class="kpi"><div class="kname">Odradených vodičov (dnes)</div><div class="kval" id="kGiveUp">–</div><div class="kdelta" id="kGiveUpDelta">–</div></div>
+  </div>
+
+  <div class="kpi-guide" aria-label="Vysvetlenie smeru metrík">
+    <strong>Ako čítať metriky:</strong>
+    Obsadenosť je lepšia, keď nie je na maxime <span class="good">(ideálne približne do 85 %)</span>,
+    dlhodobo veľmi vysoká je <span class="warn">horšia</span>.
+    Čakajúce vozidlá, priemerná doba hľadania aj odradení vodiči sú lepšie, keď sú
+    <span class="good">nižšie (bližšie k nule)</span>.
+  </div>
+
+  <div class="maps-row">
+    <div class="map-card">
+      <h3>Stav parkoviska – teraz</h3>
+      <canvas id="mapCanvas" height="300"></canvas>
+    </div>
+    <div class="map-card">
+      <h3>Pohyby vozidiel (posledná hodina)</h3>
+      <canvas id="flowCanvas" height="300"></canvas>
+    </div>
+  </div>
+
+  <div class="map-card">
+    <h3>Priebeh obsadenosti počas dňa (hodinové priemery)</h3>
+    <canvas id="dailyChart" height="100"></canvas>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#1a1a2e"></div> Celková obsadenosť</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#e07020"></div> Vyhradené miesta</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#3090d0"></div> Verejné miesta</div>
+    </div>
+  </div>
+</div>
+
+<!-- RIGHT: Charts + log -->
+<div class="panel-right">
+  <h2>Štatistiky</h2>
+
+  <div class="chart-wrap">
+    <h3>Obsadenosť počas DNÍ simulácie (dennný max)</h3>
+    <canvas id="multiDayChart" class="bar-chart"></canvas>
+  </div>
+
+  <div class="chart-wrap">
+    <h3>Čakajúci / hľadajúci</h3>
+    <canvas id="waitChart" class="hist"></canvas>
+  </div>
+
+  <div class="chart-wrap">
+    <h3>Odradení vodiči (denne)</h3>
+    <canvas id="giveUpChart" class="hist"></canvas>
+  </div>
+
+  <hr>
+  <h2>Porovnanie scenárov</h2>
+  <div id="scenarioCompare" style="font-size:12px; color:#555; line-height:1.7">
+    Spusti aspoň 2 scenáre, aby sa zobrazilo porovnanie.
+  </div>
+
+  <hr>
+  <h2>Denník udalostí</h2>
+  <div class="event-log" id="eventLog">
+    <div class="ev-sys">Stlač "Spustiť simuláciu".</div>
+  </div>
+</div>
+
+</div><!-- layout -->
+
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+// ──────────────────────────────────────────────────────────
+// SCENARIOS
+// ──────────────────────────────────────────────────────────
+const SCENARIOS = [
+  {
+    id: 'baseline',
+    name: '🅐 Súčasný stav',
+    desc: 'Neregulovane, žiadne vyhradenia',
+    params: { pTotalSpots:760, pReservedN:0, pHouseholds:1200, pCarPct:50, pMultiCarPct:20,
+              pDayDuration:3, pNightDuration:14, pExternalDemand:10, pReservedDurationBoost:10 }
+  },
+  {
+    id: 'reserved_partial',
+    name: '🅑 Vyhradenie',
+    desc: 'Všetky miesta vyhradené (plán MČ), dopyt nezmenený',
+    params: { pTotalSpots:760, pReservedN:248, pHouseholds:1200, pCarPct:50, pMultiCarPct:20,
+              pDayDuration:3, pNightDuration:14, pExternalDemand:10, pReservedDurationBoost:10 }
+  },
+  {
+    id: 'reserved_behavior',
+    name: '🅒 Vyhradenie + meniace sa správanie',
+    desc: 'Vodiči bez vyhradeného miesta nechávajú autá dlhšie stáť',
+    params: { pTotalSpots:760, pReservedN:248, pHouseholds:1200, pCarPct:50, pMultiCarPct:20,
+              pDayDuration:3, pNightDuration:14, pExternalDemand:10, pReservedDurationBoost:40 }
+  },
+];
+
+// ──────────────────────────────────────────────────────────
+// STATE
+// ──────────────────────────────────────────────────────────
+let sim = null;
+let animFrame = null;
+let paused = false;
+let lastTs = null;
+let activeScenario = 'baseline';
+const scenarioResults = {};
+
+// ──────────────────────────────────────────────────────────
+// DOM HELPERS
+// ──────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const mapCanvas = $('mapCanvas');
+const flowCanvas = $('flowCanvas');
+const dailyChart = $('dailyChart');
+const multiDayChart = $('multiDayChart');
+const waitChart = $('waitChart');
+const giveUpChart = $('giveUpChart');
+const MC = mapCanvas.getContext('2d');
+const FC = flowCanvas.getContext('2d');
+const DC = dailyChart.getContext('2d');
+const MDC = multiDayChart.getContext('2d');
+const WC = waitChart.getContext('2d');
+const GC = giveUpChart.getContext('2d');
+
+function getParams() {
+  return {
+    totalSpots: +$('pTotalSpots').value,
+    reservedN: +$('pReservedN').value,
+    households: +$('pHouseholds').value,
+    carPct: +$('pCarPct').value / 100,
+    multiCarPct: +$('pMultiCarPct').value / 100,
+    dayDuration: +$('pDayDuration').value,
+    nightDuration: +$('pNightDuration').value,
+    externalDemand: +$('pExternalDemand').value / 100,
+    reservedDurationBoost: +$('pReservedDurationBoost').value / 100
+  };
+}
+
+// ──────────────────────────────────────────────────────────
+// SIMULATION MODEL
+// ──────────────────────────────────────────────────────────
+class ParkingSim {
+  constructor(params) {
+    this.p = params;
+    this.SIM_DAYS = 14;
+    this.HOURS_PER_DAY = 24;
+    this.totalHours = this.SIM_DAYS * this.HOURS_PER_DAY;
+
+    // Time state (fractional hours from start)
+    this.t = 8; // start at 08:00
+    this.speed = +$('simSpeed').value; // hours per second
+
+    // Spots
+    this.nReserved = Math.min(params.reservedN, params.totalSpots);
+    this.nPublic = params.totalSpots - this.nReserved;
+
+    // Build household cars
+    this.households = [];
+    const nCars = Math.round(params.households * params.carPct);
+    const nMulti = Math.round(params.households * params.multiCarPct);
+    let carId = 0;
+    for (let h = 0; h < params.households; h++) {
+      const hasCar = h < nCars;
+      const hasReserved = h < this.nReserved && hasCar; // first nReserved households got a spot
+      const ncarsH = hasCar ? (h < nMulti ? 2 : 1) : 0;
+      this.households.push({ id: h, ncars: ncarsH, hasReserved });
+    }
+
+    // Cars
+    this.cars = [];
+    let cid = 0;
+    this.households.forEach(h => {
+      for (let c = 0; c < h.ncars; c++) {
+        this.cars.push({
+          id: cid++,
+          household: h.id,
+          hasReserved: c === 0 && h.hasReserved, // only first car per HH can use reserved spot
+          parked: true,
+          parkedAt: null, // 'reserved' | 'public' | null
+          arriveTime: 0,
+          departTime: 0,
+          searchTime: 0,
+          gaveUp: false
+        });
+      }
+    });
+
+    // External visitor cars pool (re-used)
+    this.nExternal = Math.round(params.totalSpots * params.externalDemand);
+    this.externalCars = [];
+    for (let e = 0; e < this.nExternal * 3; e++) {
+      this.externalCars.push({ id: 'ext_' + e, parked: false, parkedAt: null, arriveTime: 0, departTime: 0, searchTime: 0, gaveUp: false });
+    }
+
+    // Spots state
+    this.reservedSpots = Array.from({length: this.nReserved}, (_, i) => ({ id: i, type: 'reserved', occupant: null }));
+    this.publicSpots = Array.from({length: this.nPublic}, (_, i) => ({ id: i, type: 'public', occupant: null }));
+
+    // Initialize all resident cars as parked at start (08:00)
+    this._initParked();
+
+    // Stats
+    this.hourlyOccupancy = []; // {h, total, reserved, public} per simulated hour recorded
+    this.dailyStats = []; // per day: {maxOcc, avgWaiting, giveUps}
+    this.waitingHistory = []; // per tick
+    this.giveUpHistory = [];
+    this.currentDay = 1;
+    this.todayGiveUps = 0;
+    this.todayMaxWaiting = 0;
+    this.lastRecordedHour = -1;
+
+    this.events = [];
+    this.recentFlows = []; // {x,y, vx,vy, age, color} for flow vis
+
+    this._log('sys', `Spustená simulácia: ${params.totalSpots} miest, ${this.nReserved} vyhradených, ${this.cars.length} áut`);
+  }
+
+  _initParked() {
+    // At 08:00 most resident cars are parked (they arrived overnight)
+    const p = this.p;
+    this.cars.forEach(car => {
+      // 70% of resident cars are parked at 08:00
+      if (Math.random() < 0.7) {
+        car.parked = true;
+        const overnight = p.nightDuration * (1 + (Math.random() - 0.5) * 0.4);
+        car.arriveTime = 8 - overnight;
+        const boost = !car.hasReserved ? p.reservedDurationBoost : 0;
+        car.departTime = 8 + p.dayDuration * (1 + boost) * (0.5 + Math.random() * 1.5);
+        // assign spot
+        if (car.hasReserved && this._freeReserved() > 0) {
+          const s = this._pickFreeReserved();
+          s.occupant = car.id;
+          car.parkedAt = 'reserved';
+        } else if (this._freePublic() > 0) {
+          const s = this._pickFreePublic();
+          s.occupant = car.id;
+          car.parkedAt = 'public';
+        } else {
+          car.parked = false;
+          car.parkedAt = null;
+        }
+      } else {
+        car.parked = false;
+        car.parkedAt = null;
+        car.departTime = 0;
+      }
+    });
+  }
+
+  _freeReserved() { return this.reservedSpots.filter(s => !s.occupant).length; }
+  _freePublic() { return this.publicSpots.filter(s => !s.occupant).length; }
+  _pickFreeReserved() { return this.reservedSpots.find(s => !s.occupant); }
+  _pickFreePublic() { return this.publicSpots.find(s => !s.occupant); }
+
+  _totalOccupied() { return this.reservedSpots.filter(s=>s.occupant).length + this.publicSpots.filter(s=>s.occupant).length; }
+  _reservedOccupied() { return this.reservedSpots.filter(s=>s.occupant).length; }
+  _publicOccupied() { return this.publicSpots.filter(s=>s.occupant).length; }
+  _waiting() { return [...this.cars, ...this.externalCars].filter(c => !c.parked && !c.gaveUp && c.searchTime > 0).length; }
+
+  _log(type, msg) {
+    const hour = this.t % 24;
+    const timeStr = `${String(Math.floor(hour)).padStart(2,'0')}:${String(Math.floor((hour%1)*60)).padStart(2,'0')}`;
+    this.events.unshift({ type, msg, time: timeStr, day: this.currentDay });
+    if (this.events.length > 60) this.events.pop();
+  }
+
+  isReservedActive(hour) {
+    // Vyhradenie platí od 15:00 do 8:00 (ďalšieho dňa)
+    const h = hour % 24;
+    return h >= 15 || h < 8;
+  }
+
+  step(dtHours) {
+    const p = this.p;
+    const prevDay = this.currentDay;
+    this.t += dtHours;
+    this.currentDay = Math.floor(this.t / 24) + 1;
+
+    if (this.currentDay !== prevDay) {
+      // new day bookkeeping
+      this.dailyStats.push({ day: prevDay, maxOcc: this.todayMaxWaiting, giveUps: this.todayGiveUps });
+      this.todayGiveUps = 0;
+      this.todayMaxWaiting = 0;
+    }
+
+    const hourOfDay = this.t % 24;
+    const reservedActive = this.isReservedActive(hourOfDay);
+
+    // ---- DEPARTURES ----
+    [...this.cars, ...this.externalCars].forEach(car => {
+      if (!car.parked) return;
+      if (this.t >= car.departTime) {
+        // depart
+        car.parked = false;
+        if (car.parkedAt === 'reserved') {
+          const s = this.reservedSpots.find(s => s.occupant === car.id);
+          if (s) s.occupant = null;
+        } else if (car.parkedAt === 'public') {
+          const s = this.publicSpots.find(s => s.occupant === car.id);
+          if (s) s.occupant = null;
+        }
+        car.parkedAt = null;
+        car.searchTime = 0;
+        car.gaveUp = false;
+        this.recentFlows.push({ x: Math.random(), y: Math.random(), vx: (Math.random()-.5)*0.3, vy: (Math.random()-.5)*0.3, age: 0, color: '#a00' });
+      }
+    });
+
+    // ---- ARRIVALS ----
+    // Resident cars that are not parked and haven't given up
+    this.cars.forEach(car => {
+      if (car.parked || car.gaveUp) return;
+
+      // Should this car try to arrive? Based on time-of-day demand profile
+      const arrivalProb = this._arrivalProb(hourOfDay) * dtHours;
+      if (Math.random() > arrivalProb) return;
+
+      // Try to park
+      car.searchTime += dtHours * 60; // minutes
+
+      const boost = !car.hasReserved ? p.reservedDurationBoost : 0;
+
+      // Can use reserved spot?
+      if (car.hasReserved && reservedActive && this._freeReserved() > 0) {
+        const s = this._pickFreeReserved();
+        s.occupant = car.id;
+        car.parked = true;
+        car.parkedAt = 'reserved';
+        car.arriveTime = this.t;
+        const dur = p.nightDuration * (1 + boost) * (0.8 + Math.random() * 0.4);
+        car.departTime = this.t + dur;
+        car.searchTime = 0;
+        this._log('arr', `Rezident #${car.id} zaparkoval na vyhradenom mieste (${car.searchTime.toFixed(1)} min hľadania)`);
+        this.recentFlows.push({ x: Math.random(), y: Math.random(), vx: 0, vy: 0, age: 0, color: '#e07020' });
+        return;
+      }
+
+      // Try public spot
+      if (this._freePublic() > 0) {
+        const s = this._pickFreePublic();
+        s.occupant = car.id;
+        car.parked = true;
+        car.parkedAt = 'public';
+        car.arriveTime = this.t;
+        const dur = (hourOfDay >= 18 || hourOfDay < 8)
+          ? p.nightDuration * (1 + boost) * (0.8 + Math.random() * 0.4)
+          : p.dayDuration * (1 + boost) * (0.5 + Math.random() * 1.0);
+        car.departTime = this.t + dur;
+        const st = car.searchTime;
+        car.searchTime = 0;
+        if (st > 2) this._log('arr', `Rezident #${car.id} zaparkoval (verejné) po ${st.toFixed(1)} min hľadania`);
+        this.recentFlows.push({ x: Math.random(), y: Math.random(), vx: 0, vy: 0, age: 0, color: '#3090d0' });
+        return;
+      }
+
+      // No spot found
+      if (car.searchTime > 15) {
+        // Give up
+        car.gaveUp = true;
+        this.todayGiveUps++;
+        this._log('wait', `Rezident #${car.id} odišiel bez miesta po ${car.searchTime.toFixed(0)} min`);
+      }
+    });
+
+    // External cars
+    if (!reservedActive || this.nReserved === 0) {
+      // External arrivals only when reserved not active OR no reserved spots exist
+      this.externalCars.forEach(extCar => {
+        if (extCar.parked || extCar.gaveUp) return;
+        const arrivalProb = this._externalArrivalProb(hourOfDay) * dtHours;
+        if (Math.random() > arrivalProb * 0.3) return;
+        extCar.searchTime += dtHours * 60;
+        if (this._freePublic() > 0) {
+          const s = this._pickFreePublic();
+          s.occupant = extCar.id;
+          extCar.parked = true;
+          extCar.parkedAt = 'public';
+          extCar.arriveTime = this.t;
+          extCar.departTime = this.t + 0.5 + Math.random() * 2.5;
+          extCar.searchTime = 0;
+          this.recentFlows.push({ x: Math.random(), y: Math.random(), vx: 0.1, vy: -0.1, age: 0, color: '#60b060' });
+        } else if (extCar.searchTime > 8) {
+          extCar.gaveUp = true;
+          this.todayGiveUps++;
+          extCar.gaveUp = false; // reset for next attempt
+          extCar.searchTime = 0;
+        }
+      });
+    }
+
+    // Reset gaveUp cars so they can retry tomorrow
+    this.cars.forEach(car => {
+      if (car.gaveUp && Math.random() < dtHours * 0.05) {
+        car.gaveUp = false;
+        car.searchTime = 0;
+      }
+    });
+
+    // Record hourly stats
+    const hourInt = Math.floor(this.t);
+    if (hourInt > this.lastRecordedHour) {
+      this.lastRecordedHour = hourInt;
+      const occ = this._totalOccupied();
+      const res = this._reservedOccupied();
+      const pub = this._publicOccupied();
+      const w = this._waiting();
+      this.hourlyOccupancy.push({ h: this.t, total: occ, reserved: res, public: pub, waiting: w });
+      this.waitingHistory.push(w);
+      this.giveUpHistory.push(this.todayGiveUps);
+      if (w > this.todayMaxWaiting) this.todayMaxWaiting = w;
+    }
+
+    // Age flows
+    this.recentFlows.forEach(f => f.age += dtHours);
+    this.recentFlows = this.recentFlows.filter(f => f.age < 1);
+  }
+
+  _arrivalProb(h) {
+    // Bimodal: morning departure peak 7-9, evening return peak 17-20
+    const morning = Math.exp(-0.5 * ((h - 8) / 1.5) ** 2) * 0.6;
+    const evening = Math.exp(-0.5 * ((h - 18) / 1.2) ** 2) * 1.0;
+    const night = (h < 2 || h > 23) ? 0.05 : 0;
+    return Math.min(1, morning + evening + night) * (this.cars.length / 50);
+  }
+
+  _externalArrivalProb(h) {
+    // Visitors peak midday / early afternoon
+    const midday = Math.exp(-0.5 * ((h - 13) / 2.5) ** 2) * 0.5;
+    return midday * (this.nExternal / 20);
+  }
+
+  isDone() {
+    return this.t >= this.totalHours + 8;
+  }
+}
+
+// ──────────────────────────────────────────────────────────
+// RENDERING
+// ──────────────────────────────────────────────────────────
+function resizeCanvas(c) {
+  c.width = c.offsetWidth * devicePixelRatio;
+  c.height = c.offsetHeight * devicePixelRatio;
+}
+
+function drawMap(sim) {
+  resizeCanvas(mapCanvas);
+  const w = mapCanvas.width, h = mapCanvas.height;
+  const dpr = devicePixelRatio;
+  MC.clearRect(0, 0, w, h);
+  MC.fillStyle = '#f8f8f4';
+  MC.fillRect(0, 0, w, h);
+
+  const nRes = sim.nReserved;
+  const nPub = sim.nPublic;
+  const resOcc = sim._reservedOccupied();
+  const pubOcc = sim._publicOccupied();
+  const total = sim.p.totalSpots;
+  const totalOcc = sim._totalOccupied();
+
+  const padL = 84 * dpr;
+  const padR = 72 * dpr;
+  const barH = 34 * dpr;
+  const gap = 20 * dpr;
+  const barW = w - padL - padR;
+  const labelSize = 11 * dpr;
+  const r = 3 * dpr; // corner radius
+
+  function roundRect(ctx, x, y, rw, rh, radius) {
+    if (rw <= 0) return;
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.lineTo(x + rw - radius, y);
+    ctx.quadraticCurveTo(x + rw, y, x + rw, y + radius);
+    ctx.lineTo(x + rw, y + rh - radius);
+    ctx.quadraticCurveTo(x + rw, y + rh, x + rw - radius, y + rh);
+    ctx.lineTo(x + radius, y + rh);
+    ctx.quadraticCurveTo(x, y + rh, x, y + rh - radius);
+    ctx.lineTo(x, y + radius);
+    ctx.quadraticCurveTo(x, y, x + radius, y);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  const rows = [
+    { label: 'Vyhradené', n: nRes, occ: nRes > 0 ? resOcc : null, colorOcc: '#e07020', colorFree: '#f5c080' },
+    { label: 'Verejné',   n: nPub, occ: pubOcc,                    colorOcc: '#1a6090', colorFree: '#a0d0f0' },
+  ];
+
+  rows.forEach((row, ri) => {
+    const y = (28 + ri * (34 + 20)) * dpr;
+    // Bar width proportional to this type's share of total spots
+    const rowBarW = total > 0 ? barW * (row.n / total) : barW;
+
+    // Row label
+    MC.fillStyle = '#444';
+    MC.font = `600 ${labelSize}px system-ui`;
+    MC.textAlign = 'right';
+    MC.fillText(row.label, padL - 8 * dpr, y + barH * 0.65);
+
+    if (row.n === 0 || row.occ === null) {
+      // No spots of this type – show a thin placeholder
+      MC.fillStyle = '#e4e4e4';
+      roundRect(MC, padL, y, Math.max(rowBarW, 40 * dpr), barH, r);
+      MC.fillStyle = '#aaa';
+      MC.font = `${10 * dpr}px system-ui`;
+      MC.textAlign = 'left';
+      MC.fillText('–', padL + 6 * dpr, y + barH * 0.65);
+    } else {
+      const occW = rowBarW * (row.occ / row.n);
+
+      // free part (background, proportional width)
+      MC.fillStyle = row.colorFree;
+      roundRect(MC, padL, y, rowBarW, barH, r);
+
+      // occupied part (foreground, clipped left)
+      if (occW > 0) {
+        MC.fillStyle = row.colorOcc;
+        roundRect(MC, padL, y, Math.max(occW, r * 2), barH, r);
+      }
+
+      // Label inside occupied area
+      if (row.occ > 0 && occW > 30 * dpr) {
+        MC.fillStyle = '#fff';
+        MC.font = `${10 * dpr}px system-ui`;
+        MC.textAlign = 'left';
+        MC.fillText(`${row.occ} obsad.`, padL + 6 * dpr, y + barH * 0.65);
+      }
+    }
+
+    // Count label just after the bar
+    MC.fillStyle = '#555';
+    MC.font = `${labelSize}px system-ui`;
+    MC.textAlign = 'left';
+    const countTxt = row.n > 0 ? `${row.occ ?? 0} / ${row.n}` : '–';
+    MC.fillText(countTxt, padL + rowBarW + 6 * dpr, y + barH * 0.65);
+  });
+
+  // Total summary bar
+  const y3 = (28 + 2 * (34 + 20) + 14) * dpr;
+  const pct = total > 0 ? totalOcc / total : 0;
+
+  MC.fillStyle = '#444';
+  MC.font = `600 ${labelSize}px system-ui`;
+  MC.textAlign = 'right';
+  MC.fillText('Celkom', padL - 8 * dpr, y3 + barH * 0.65);
+
+  MC.fillStyle = '#ddd';
+  roundRect(MC, padL, y3, barW, barH, r);
+
+  if (totalOcc > 0) {
+    MC.fillStyle = pct > 0.9 ? '#c33' : pct > 0.75 ? '#d80' : '#3a7';
+    roundRect(MC, padL, y3, Math.max(barW * pct, r * 2), barH, r);
+  }
+
+  if (pct > 0.12) {
+    MC.fillStyle = '#fff';
+    MC.font = `bold ${12 * dpr}px system-ui`;
+    MC.textAlign = 'left';
+    MC.fillText(`${(pct * 100).toFixed(0)} %`, padL + 8 * dpr, y3 + barH * 0.67);
+  }
+
+  MC.fillStyle = '#555';
+  MC.font = `${labelSize}px system-ui`;
+  MC.textAlign = 'left';
+  MC.fillText(`${totalOcc} / ${total}`, padL + barW + 8 * dpr, y3 + barH * 0.65);
+
+  // Waiting vehicles warning
+  const waiting = sim._waiting();
+  const yWarn = y3 + barH + 18 * dpr;
+  if (waiting > 0) {
+    MC.fillStyle = '#c44';
+    MC.font = `bold ${11 * dpr}px system-ui`;
+    MC.textAlign = 'left';
+    MC.fillText(`⚠ ${waiting} vozidiel hľadá miesto`, padL, yWarn);
+  } else {
+    MC.fillStyle = '#3a7';
+    MC.font = `${11 * dpr}px system-ui`;
+    MC.textAlign = 'left';
+    MC.fillText('✓ všetci zaparkovaní', padL, yWarn);
+  }
+
+  MC.textAlign = 'left'; // reset
+}
+
+function drawLegendItem(ctx, x, y, color, label) {
+  ctx.fillStyle = color;
+  ctx.fillRect(x, y - 7 * devicePixelRatio, 10 * devicePixelRatio, 8 * devicePixelRatio);
+  ctx.fillStyle = '#333';
+  ctx.fillText(label, x + 13 * devicePixelRatio, y);
+}
+
+function drawFlow(sim) {
+  resizeCanvas(flowCanvas);
+  const w = flowCanvas.width, h = flowCanvas.height;
+  FC.clearRect(0, 0, w, h);
+  FC.fillStyle = '#f8f8f4';
+  FC.fillRect(0, 0, w, h);
+
+  // Draw road
+  FC.fillStyle = '#ddd';
+  FC.fillRect(0, h * 0.45, w, h * 0.1);
+
+  sim.recentFlows.forEach(f => {
+    const alpha = Math.max(0, 1 - f.age);
+    FC.globalAlpha = alpha;
+    FC.beginPath();
+    FC.arc(f.x * w, 0.2 * h + f.y * h * 0.6, 5 * devicePixelRatio, 0, Math.PI * 2);
+    FC.fillStyle = f.color;
+    FC.fill();
+  });
+  FC.globalAlpha = 1;
+
+  // Occupancy bar
+  const occ = sim._totalOccupied() / sim.p.totalSpots;
+  FC.fillStyle = '#eee';
+  FC.fillRect(w * 0.1, h * 0.88, w * 0.8, 12 * devicePixelRatio);
+  FC.fillStyle = occ > 0.9 ? '#d33' : occ > 0.7 ? '#e90' : '#3a3';
+  FC.fillRect(w * 0.1, h * 0.88, w * 0.8 * occ, 12 * devicePixelRatio);
+  FC.font = `${11 * devicePixelRatio}px system-ui`;
+  FC.fillStyle = '#333';
+  FC.fillText(`Obsadenosť: ${(occ * 100).toFixed(0)} %`, w * 0.1, h * 0.85);
+}
+
+function drawDailyChart(sim) {
+  resizeCanvas(dailyChart);
+  const w = dailyChart.width, h = dailyChart.height;
+  DC.clearRect(0, 0, w, h);
+
+  const today = sim.currentDay;
+  const dayData = sim.hourlyOccupancy.filter(d => Math.floor(d.h / 24) + 1 === today);
+  if (dayData.length < 2) return;
+
+  const maxH = 25; // 0-24h
+  const total = sim.p.totalSpots;
+
+  const lines = [
+    { key: 'total', color: '#1a1a2e' },
+    { key: 'reserved', color: '#e07020' },
+    { key: 'public', color: '#3090d0' }
+  ];
+
+  lines.forEach(line => {
+    DC.beginPath();
+    dayData.forEach((d, i) => {
+      const x = w * ((d.h % 24) / 24);
+      const y = h - (d[line.key] / total) * (h - 20 * devicePixelRatio) - 4 * devicePixelRatio;
+      i === 0 ? DC.moveTo(x, y) : DC.lineTo(x, y);
+    });
+    DC.strokeStyle = line.color;
+    DC.lineWidth = 2 * devicePixelRatio;
+    DC.stroke();
+  });
+
+  // 100% line
+  DC.setLineDash([4, 4]);
+  DC.strokeStyle = '#f005';
+  DC.beginPath();
+  DC.moveTo(0, 4 * devicePixelRatio);
+  DC.lineTo(w, 4 * devicePixelRatio);
+  DC.stroke();
+  DC.setLineDash([]);
+
+  // hour ticks
+  DC.fillStyle = '#999';
+  DC.font = `${9 * devicePixelRatio}px system-ui`;
+  [0, 6, 12, 15, 18, 22].forEach(hh => {
+    const x = w * (hh / 24);
+    DC.fillText(`${hh}h`, x + 2 * devicePixelRatio, h - 2);
+  });
+
+  // reserved active shading
+  DC.fillStyle = 'rgba(224,112,32,0.08)';
+  DC.fillRect(0, 0, w * (8 / 24), h);
+  DC.fillRect(w * (15 / 24), 0, w * (9 / 24), h);
+}
+
+function drawMultiDay(sim) {
+  resizeCanvas(multiDayChart);
+  const w = multiDayChart.width, h = multiDayChart.height;
+  MDC.clearRect(0, 0, w, h);
+
+  const days = 14;
+  const barW = (w - 20 * devicePixelRatio) / days;
+  const total = sim.p.totalSpots;
+
+  // Group hourly by day, take max occupancy
+  const dayMax = {};
+  sim.hourlyOccupancy.forEach(d => {
+    const day = Math.floor(d.h / 24) + 1;
+    if (!dayMax[day] || d.total > dayMax[day]) dayMax[day] = d.total;
+  });
+
+  for (let day = 1; day <= days; day++) {
+    const occ = (dayMax[day] || 0) / total;
+    const bh = occ * (h - 16 * devicePixelRatio);
+    const x = 10 * devicePixelRatio + (day - 1) * barW;
+    const y = h - bh - 12 * devicePixelRatio;
+    MDC.fillStyle = occ > 0.92 ? '#d33' : occ > 0.75 ? '#e90' : '#3a3';
+    MDC.fillRect(x, y, barW - 3 * devicePixelRatio, bh);
+    MDC.fillStyle = '#888';
+    MDC.font = `${8 * devicePixelRatio}px system-ui`;
+    MDC.fillText(day, x + barW * 0.2, h - 2);
+  }
+
+  MDC.strokeStyle = '#f00a';
+  MDC.setLineDash([3, 3]);
+  MDC.beginPath();
+  const capY = h - (h - 16 * devicePixelRatio) - 12 * devicePixelRatio;
+  MDC.moveTo(0, capY);
+  MDC.lineTo(w, capY);
+  MDC.stroke();
+  MDC.setLineDash([]);
+}
+
+function drawHistory(canvas, ctx, data, color, label) {
+  resizeCanvas(canvas);
+  const w = canvas.width, h = canvas.height;
+  ctx.clearRect(0, 0, w, h);
+  if (data.length < 2) return;
+  const maxVal = Math.max(...data, 1);
+  ctx.beginPath();
+  data.forEach((v, i) => {
+    const x = (i / (data.length - 1)) * w;
+    const y = h - (v / maxVal) * (h - 10 * devicePixelRatio) - 4 * devicePixelRatio;
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2 * devicePixelRatio;
+  ctx.stroke();
+  ctx.fillStyle = '#666';
+  ctx.font = `${9 * devicePixelRatio}px system-ui`;
+  ctx.fillText(`Max: ${maxVal}`, 4, 12 * devicePixelRatio);
+}
+
+// ──────────────────────────────────────────────────────────
+// UI UPDATE
+// ──────────────────────────────────────────────────────────
+function updateKPIs(s) {
+  const occ = s._totalOccupied();
+  const total = s.p.totalSpots;
+  const pctTotal = total > 0 ? (occ / total * 100) : 0;
+  const pubOcc = s._publicOccupied();
+  const pubTotal = s.nPublic;
+  const pctPublic = pubTotal > 0 ? (pubOcc / pubTotal * 100) : null;
+
+  $('kOcc').textContent = `${occ} / ${pubOcc}`;
+  $('kOccPct').textContent = pctPublic === null
+    ? `${pctTotal.toFixed(0)} % celkom • verejné: –`
+    : `${pctTotal.toFixed(0)} % celkom • ${pctPublic.toFixed(0)} % verejné`;
+
+  const stressPct = pctPublic === null ? pctTotal : Math.max(pctTotal, pctPublic);
+  $('kOccPct').className = `kdelta ${stressPct > 90 ? 'up' : stressPct > 70 ? '' : 'down'}`;
+
+  const w = s._waiting();
+  $('kWaiting').textContent = w;
+  $('kWaitPct').textContent = w > 0 ? `${w} vozidiel bez miesta` : 'všetci zaparkovaní';
+  $('kWaitPct').className = `kdelta ${w > 5 ? 'up' : 'down'}`;
+
+  const recentWaits = s.hourlyOccupancy.slice(-6).map(d => d.waiting);
+  const avgW = recentWaits.length ? (recentWaits.reduce((a, b) => a + b, 0) / recentWaits.length).toFixed(1) : '–';
+  $('kAvgSearch').textContent = avgW;
+
+  $('kGiveUp').textContent = s.todayGiveUps;
+  $('kGiveUpDelta').textContent = `dnes`;
+}
+
+function updateClock(s) {
+  const h = s.t % 24;
+  const hh = String(Math.floor(h)).padStart(2, '0');
+  const mm = String(Math.floor((h % 1) * 60)).padStart(2, '0');
+  $('clockDisplay').textContent = `${hh}:${mm}`;
+  $('dayDisplay').textContent = `Deň ${s.currentDay}`;
+
+  const phasePct = (s.t / s.totalHours * 100).toFixed(0);
+  $('simProgress').style.width = phasePct + '%';
+  $('simDayLabel').textContent = `Deň ${s.currentDay} / ${s.SIM_DAYS}`;
+
+  const reservedActive = s.isReservedActive(h);
+  $('phaseLabel').textContent = reservedActive
+    ? '🔒 Vyhradené miesta aktívne (15:00 – 08:00)'
+    : '🔓 Vyhradené miesta voľné pre verejnosť (08:00 – 15:00)';
+}
+
+function updateEventLog(s) {
+  const log = $('eventLog');
+  log.innerHTML = s.events.slice(0, 20).map(e => {
+    const cls = e.type === 'arr' ? 'ev-arr' : e.type === 'dep' ? 'ev-dep' : e.type === 'wait' ? 'ev-wait' : 'ev-sys';
+    return `<div class="${cls}">[D${e.day} ${e.time}] ${e.msg}</div>`;
+  }).join('');
+}
+
+// ──────────────────────────────────────────────────────────
+// MAIN LOOP
+// ──────────────────────────────────────────────────────────
+function tick(ts) {
+  if (paused || !sim) { animFrame = requestAnimationFrame(tick); return; }
+  if (lastTs === null) lastTs = ts;
+  const dtReal = (ts - lastTs) / 1000; // real seconds
+  lastTs = ts;
+  const speed = +$('simSpeed').value;
+  $('speedLabel').textContent = `×${speed}`;
+  const dtSimH = dtReal * speed; // sim hours to advance this frame
+
+  // Fixed micro-step so probability calculations are speed-independent.
+  // Speed only controls how many steps are run per frame, not the step size.
+  const DT = 0.05; // 3 sim-minutes per micro-step
+  let remaining = Math.min(dtSimH, 2); // safety cap: max 2 sim-hours per frame
+  while (remaining > 0 && !sim.isDone()) {
+    sim.step(DT);
+    remaining -= DT;
+  }
+
+  updateClock(sim);
+  updateKPIs(sim);
+  drawMap(sim);
+  drawFlow(sim);
+  drawDailyChart(sim);
+  drawMultiDay(sim);
+  drawHistory(waitChart, WC, sim.waitingHistory, '#e07020', 'Čakajúci');
+  drawHistory(giveUpChart, GC, sim.giveUpHistory, '#d33', 'Odradení');
+  updateEventLog(sim);
+
+  if (sim.isDone()) {
+    finishSim();
+    return;
+  }
+  animFrame = requestAnimationFrame(tick);
+}
+
+function finishSim() {
+  paused = true;
+  const s = sim;
+  const maxOcc = Math.max(...s.hourlyOccupancy.map(d => d.total));
+  const avgWait = s.waitingHistory.length ? (s.waitingHistory.reduce((a, b) => a + b, 0) / s.waitingHistory.length).toFixed(1) : 0;
+  const totalGiveUps = s.giveUpHistory.reduce((a, b) => a + b, 0);
+  scenarioResults[activeScenario] = { maxOcc, avgWait, totalGiveUps, totalSpots: s.p.totalSpots, nReserved: s.nReserved };
+  s._log('sys', `Simulácia dokončená. Max obsadenosť: ${maxOcc}/${s.p.totalSpots}, priemer čakajúcich: ${avgWait}, odradení: ${totalGiveUps}`);
+  updateEventLog(s);
+  updateComparison();
+  $('btnRun').disabled = false;
+  $('btnRun').textContent = '▶ Spustiť znovu';
+}
+
+function updateComparison() {
+  const keys = Object.keys(scenarioResults);
+  if (keys.length < 1) return;
+  const sc = $('scenarioCompare');
+  let html = '<table style="width:100%;border-collapse:collapse;font-size:11px">';
+  html += '<tr style="background:#f5f5f5"><th style="text-align:left;padding:4px">Scenár</th><th>Max obs.</th><th>Čakajúci (avg)</th><th>Odradení</th></tr>';
+  keys.forEach(k => {
+    const r = scenarioResults[k];
+    const sc = SCENARIOS.find(s => s.id === k);
+    const pct = (r.maxOcc / r.totalSpots * 100).toFixed(0);
+    const color = pct > 92 ? '#fdd' : pct > 75 ? '#ffd' : '#dfd';
+    html += `<tr style="background:${color}"><td style="padding:4px">${sc ? sc.name : k}</td><td style="text-align:center">${pct}%</td><td style="text-align:center">${r.avgWait}</td><td style="text-align:center">${r.totalGiveUps}</td></tr>`;
+  });
+  html += '</table>';
+  sc.innerHTML = html;
+}
+
+// ──────────────────────────────────────────────────────────
+// INIT SCENARIOS UI
+// ──────────────────────────────────────────────────────────
+function buildScenarioList() {
+  const list = $('scenarioList');
+  SCENARIOS.forEach(sc => {
+    const btn = document.createElement('button');
+    btn.className = 'scenario-btn' + (sc.id === activeScenario ? ' active' : '');
+    btn.dataset.id = sc.id;
+    btn.innerHTML = `<span class="sname">${sc.name}</span><span class="sdesc">${sc.desc}</span>`;
+    btn.addEventListener('click', () => {
+      activeScenario = sc.id;
+      document.querySelectorAll('.scenario-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      if (sc.params) applyParams(sc.params);
+    });
+    list.appendChild(btn);
+  });
+}
+
+function applyParams(params) {
+  Object.entries(params).forEach(([id, val]) => {
+    const normalizedId = id.startsWith('p') ? id : ('p' + id.charAt(0).toUpperCase() + id.slice(1));
+    const input = document.getElementById(normalizedId);
+    if (input) {
+      input.value = val;
+      input.dispatchEvent(new Event('input'));
+    }
+  });
+
+  const totalSpotsInput = $('pTotalSpots');
+  const reservedInput = $('pReservedN');
+  if (totalSpotsInput && reservedInput) {
+    reservedInput.max = totalSpotsInput.value;
+    if (+reservedInput.value > +totalSpotsInput.value) {
+      reservedInput.value = totalSpotsInput.value;
+      reservedInput.dispatchEvent(new Event('input'));
+    }
+  }
+}
+
+// Param bindings
+const paramBindings = [
+  ['pTotalSpots', 'vTotalSpots', v => `${v}`],
+  ['pReservedN', 'vReservedN', v => `${v}`],
+  ['pHouseholds', 'vHouseholds', v => `${v}`],
+  ['pCarPct', 'vCarPct', v => `${v}`],
+  ['pMultiCarPct', 'vMultiCarPct', v => `${v}`],
+  ['pDayDuration', 'vDayDuration', v => `${(+v).toFixed(1)}`],
+  ['pNightDuration', 'vNightDuration', v => `${(+v).toFixed(1)}`],
+  ['pExternalDemand', 'vExternalDemand', v => `${v}`],
+  ['pReservedDurationBoost', 'vReservedDurationBoost', v => `${v}`],
+];
+paramBindings.forEach(([inputId, displayId, fmt]) => {
+  const input = $(inputId);
+  const display = $(displayId);
+  if (input && display) {
+    input.addEventListener('input', () => { display.textContent = fmt(input.value); });
+  }
+});
+
+$('pTotalSpots').addEventListener('input', () => {
+  const total = +$('pTotalSpots').value;
+  const reserved = $('pReservedN');
+  reserved.max = total;
+  if (+reserved.value > total) {
+    reserved.value = total;
+    reserved.dispatchEvent(new Event('input'));
+  }
+});
+
+// ──────────────────────────────────────────────────────────
+// BUTTON HANDLERS
+// ──────────────────────────────────────────────────────────
+$('btnRun').addEventListener('click', () => {
+  if (animFrame) cancelAnimationFrame(animFrame);
+  paused = false;
+  lastTs = null;
+  sim = new ParkingSim(getParams());
+  $('btnRun').textContent = '⟳ Prebieha…';
+  $('btnRun').disabled = true;
+  animFrame = requestAnimationFrame(tick);
+  $('btnPause').textContent = '⏸ Pauza';
+});
+
+$('btnPause').addEventListener('click', () => {
+  paused = !paused;
+  lastTs = null;
+  $('btnPause').textContent = paused ? '▶ Pokračovať' : '⏸ Pauza';
+  if (!paused) animFrame = requestAnimationFrame(tick);
+});
+
+$('btnReset').addEventListener('click', () => {
+  if (animFrame) cancelAnimationFrame(animFrame);
+  paused = false;
+  lastTs = null;
+  sim = null;
+  $('btnRun').textContent = '▶ Spustiť simuláciu';
+  $('btnRun').disabled = false;
+  $('btnPause').textContent = '⏸ Pauza';
+  $('simProgress').style.width = '0%';
+  $('simDayLabel').textContent = 'Deň 0 / 14';
+  $('clockDisplay').textContent = '08:00';
+  $('dayDisplay').textContent = 'Deň 1';
+  $('kOcc').textContent = '–';
+  $('kWaiting').textContent = '–';
+  $('kAvgSearch').textContent = '–';
+  $('kGiveUp').textContent = '–';
+  $('kOccPct').textContent = '–';
+  $('kWaitPct').textContent = '–';
+  $('kAvgSearchDelta').textContent = '';
+  $('kGiveUpDelta').textContent = '';
+  ['mapCanvas','flowCanvas','dailyChart','multiDayChart','waitChart','giveUpChart'].forEach(id => {
+    const c = $(id);
+    const ctx = c.getContext('2d');
+    ctx.clearRect(0, 0, c.width, c.height);
+  });
+  $('eventLog').innerHTML = '<div class="ev-sys">Stlač "Spustiť simuláciu".</div>';
+  $('phaseLabel').textContent = '–';
+});
+
+// ──────────────────────────────────────────────────────────
+// BOOT
+// ──────────────────────────────────────────────────────────
+buildScenarioList();
+// Apply baseline params
+applyParams(SCENARIOS[0].params);
+</script>
+</body>
+</html>

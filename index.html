@@ -1,0 +1,546 @@
+<!doctype html>
+<html lang="sk">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Odmietnime parkovaciu lotériu | Hlaváčikova a Veternicová</title>
+    <meta
+      name="description"
+      content="Prehľad témy parkovania na Hlaváčikovej a Veternicovej v Karlovej Vsi: fakty, riziká, časová os a rozdelenie parkovacích miest."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <script defer src="https://cloud.umami.is/script.js" data-website-id="17a777a9-c535-44e1-aa51-061e0c53383e"></script>
+    <style>
+      :root {
+        --paper: #ffffff;
+        --ink: #101010;
+        --muted: #4a4a4a;
+        --line: #cfcfcf;
+        --radius: 0;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: var(--paper);
+        font-family: "Montserrat", "Avenir Next", "Segoe UI", Arial, sans-serif;
+        line-height: 1.58;
+        font-size: 11pt;
+        text-rendering: optimizeLegibility;
+        font-kerning: normal;
+        hanging-punctuation: first last;
+      }
+
+      .wrap {
+        width: min(68ch, 92vw);
+        margin: 0 auto;
+      }
+
+      header {
+        padding: 2rem 0 1rem;
+      }
+
+      header.wrap {
+        width: min(82ch, 92vw);
+      }
+
+      .hero {
+        border-radius: var(--radius);
+        padding: 1.5rem;
+      }
+
+      h1,
+      h2,
+      h3 {
+        font-family: "Montserrat", "Avenir Next", "Segoe UI", Arial, sans-serif;
+        line-height: 1.22;
+        margin: 0 0 0.6rem;
+        font-weight: 600;
+      }
+
+      h1 {
+        font-size: clamp(1.8rem, 4.6vw, 2.2rem);
+        max-width: none;
+        letter-spacing: 0.01em;
+        margin-bottom: 0.75rem;
+      }
+
+      h2 {
+        font-size: clamp(1.25rem, 3.1vw, 1.45rem);
+        margin-top: 1.6rem;
+        border-bottom: 1px solid var(--line);
+        padding-bottom: 0.24rem;
+      }
+
+      .lead {
+        font-size: 1.08rem;
+        max-width: 60ch;
+        color: var(--ink);
+        line-height: 1.62;
+      }
+
+      p {
+        margin: 0 0 0.85rem;
+      }
+
+      strong {
+        font-weight: 700;
+      }
+
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 0.8rem;
+      }
+
+      .chip {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 0;
+        padding: 0.2rem 0.5rem;
+        font-weight: 600;
+        font-size: 10.5pt;
+      }
+
+      section {
+        margin-bottom: 1.4rem;
+      }
+
+      .plain-list {
+        list-style: none;
+        padding-left: 0;
+        margin: 0;
+      }
+
+      .plain-list li {
+        padding: 0.48rem 0;
+        border-bottom: 1px solid #ececec;
+      }
+
+      .plain-list li:last-child {
+        border-bottom: none;
+      }
+
+      .problemy-list li {
+        border-bottom: none;
+      }
+
+      .important {
+        border-left: 3px solid #000;
+        padding: 0.7rem 0.8rem;
+        background: #fff;
+      }
+
+      ul {
+        padding-left: 1.2rem;
+      }
+
+      li + li {
+        margin-top: 0.4rem;
+      }
+
+      .timeline {
+        border-left: 2px solid #000;
+        margin-left: 0.25rem;
+        padding-left: 0.9rem;
+      }
+
+      .timeline p {
+        margin: 0 0 0.95rem;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 0;
+        overflow: hidden;
+      }
+
+      th,
+      td {
+        padding: 0.62rem 0.55rem;
+        border-bottom: 1px solid #efdfcc;
+        text-align: left;
+      }
+
+      th {
+        background: #f4f4f4;
+      }
+
+      tr:last-child td {
+        border-bottom: none;
+        font-weight: 700;
+      }
+
+      .split {
+        display: grid;
+        grid-template-columns: 1.1fr 1fr;
+        gap: 0.9rem;
+      }
+
+      figure {
+        margin: 0;
+      }
+
+      img {
+        width: 100%;
+        border-radius: 0;
+        border: 1px solid var(--line);
+      }
+
+      figcaption {
+        font-size: 0.95rem;
+        color: var(--muted);
+        margin-top: 0.35rem;
+      }
+
+      a {
+        color: #000;
+        text-underline-offset: 2px;
+        text-decoration-thickness: 0.06em;
+      }
+
+      a:hover {
+        color: #000;
+      }
+
+      .sim-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.55rem;
+        margin-top: 0.35rem;
+        padding: 0.7rem 1rem;
+        border: 1px solid #000;
+        background: linear-gradient(90deg, #fff 0%, #f5f5f5 100%);
+        font-size: 1.03rem;
+        font-weight: 700;
+        text-decoration: none;
+        letter-spacing: 0.01em;
+        transition:
+          transform 0.18s ease,
+          box-shadow 0.18s ease,
+          background-position 0.3s ease;
+        background-size: 170% 100%;
+        background-position: 0% 0;
+      }
+
+      .sim-link::after {
+        content: "→";
+        font-size: 1.05em;
+        transition: transform 0.18s ease;
+      }
+
+      .sim-link:hover,
+      .sim-link:focus-visible {
+        transform: translateY(-1px);
+        box-shadow: 4px 4px 0 #000;
+        background-position: 100% 0;
+      }
+
+      .sim-link:hover::after,
+      .sim-link:focus-visible::after {
+        transform: translateX(3px);
+      }
+
+      .sim-link:focus-visible {
+        outline: 2px solid #000;
+        outline-offset: 2px;
+      }
+
+      footer {
+        color: var(--muted);
+        padding: 1rem 0 1.8rem;
+        border-top: 1px solid var(--line);
+        font-size: 10.5pt;
+        line-height: 1.4;
+      }
+
+      @media (max-width: 860px) {
+        .split {
+          grid-template-columns: 1fr;
+        }
+
+        header {
+          padding-top: 1.8rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="wrap">
+      <div class="hero">
+        <h1>Parkovacia lotéria na Hlaváčikovej a Veternicovej</h1>
+        <!-- <p class="lead">
+          Návrh mení 248 miest na vyhradené pre konkrétnych obyvateľov cez žrebovanie.
+          Cieľom tejto stránky je stručne ukázať, čo sa mení a prečo to môže zhoršiť
+          každodenné parkovanie pre väčšinu domácností v lokalite.
+        </p> -->
+      </div>
+    </header>
+
+    <main class="wrap">
+      <section aria-labelledby="prehlad">
+        <h2 id="prehlad">Prehľad témy</h2>
+        <div class="important">
+          Na Hlaváčikovej a Veternicovej ulici v Karlovej Vsi sa plánuje premena
+          približne 33 % miest na vyhradené. Miesta budú pridelené žrebovaním a
+          určené pre konkrétnych držiteľov.
+        </div>
+      </section>
+
+      <section aria-labelledby="problemy">
+        <h2 id="problemy">Prečo je to problematické</h2>
+        <ul class="plain-list problemy-list">
+          <li>
+            <strong>Zníži sa pružnosť parkovania</strong>, pre všetkých
+            obyvateľov, kedže sa odstráni asi 33 % parkovacích miest. Ak niekto
+            z vyhradeného miesta ide na dovolenku, alebo služobnú cestu, jeho
+            miesto bude nevyužité, ale ostatní ho nebudú môcť použiť.
+          </li>
+          <li>
+            <strong
+              >Autá z vyhradených miest môžu parkovať aj na ostatných</strong
+            >, takže ak sa vyskytne parkovacie miesto bližšie k domu, bude ho
+            môcť obsadiť auto z vyhradeného miesta.
+          </li>
+          <li>
+            <strong>Rodiny s dvoma autami</strong> môžu kúpiť jedno parkovacie
+            miesto, ale s druhým autom budú mať problém nájsť voľné miesto.
+          </li>
+          <li>
+            <strong>Návštevy budú mať väčší problém</strong> ako keď tu bolo
+            rezidentské parkovanie. Babka, ktorá by po práci prišla na hodinu
+            postrážiť vnúčatá nebude mať šancu.
+          </li>
+          <li>
+            <strong>Nerovnomerné zaťaženie sektorov</strong> - niektoré sektory
+            majú skoro 50 % parkovacích miest, ktoré sa zmenia na vyhradené, iné
+            iba 24 %.
+          </li>
+          <li>
+            <strong>Autá sa prestanú používať</strong>, ak bude problém
+            zaparkovať po návrate, tak ľudia radšej pôjdu bez auta, takže viac
+            áut ostane stáť, takže bude ťažšie nájsť voľné miesto, takže ľudia
+            radšej pôjdu bez auta...
+          </li>
+          <li>
+            <strong>Zvýši sa tlak na okolité ulice</strong>, ak nebudem vedieť
+            zaparkovať pri dome, tak skúsim o ulicu ďalej. Tento problém sa týka
+            aj okolitých ulíc.
+          </li>
+          <li>
+            <strong>Až do zrušenia</strong> - ak niekto vyhrá teraz, bude to mať
+            aj o rok, až kým nepríde PAAS. Už teraz je v oblasti vyhradených.
+          </li>
+          <li>
+            <strong>Aj víkendy budú problém</strong> - Bohatší ľudia, ktorí si
+            zaplatia vyhradené miesto, častejšie cestujú aj cez víkend, takže
+            miesta budú prázdne, ale zaparkovať nebude kam.
+          </li>
+        </ul>
+      </section>
+
+      <hr />
+
+      <h1>Prílohy</h1>
+      <section aria-labelledby="simulacia">
+        <h2 id="simulacia">Simulácia</h2>
+        <a
+          class="sim-link"
+          href="parkovanie-simulacia.html"
+          target="_blank"
+          rel="noreferrer"
+          aria-label="Otvoriť simuláciu parkovania v novom okne"
+          >Zobraziť simuláciu</a
+        >
+      </section>
+
+      <section aria-labelledby="kto">
+        <h2 id="kto">Kto o tom rozhodol</h2>
+        <ul>
+          <li>
+            Oddelenie dopravy predložilo návrh Komisii pre dopravu a verejný
+            poriadok.
+          </li>
+          <li>Vedúca oddelenia: Ing. Jana Španková.</li>
+          <li>
+            Komisia rokovala na zasadnutiach
+            <a
+              href="https://www.karlovaves.sk/wp-content/uploads/2026/02/Zapisnica-DZP-2025-11-24.pdf"
+              target="_blank"
+              rel="noreferrer"
+              >24.11.2025</a
+            >
+            (hlasovanie 5:0:0) a
+            <a
+              href="https://www.karlovaves.sk/wp-content/uploads/2026/02/Zapisnica-DZP-2026-02-02.pdf"
+              target="_blank"
+              rel="noreferrer"
+              >2.2.2026</a
+            >
+            (hlasovanie 7:0:0).
+          </li>
+          <li>
+            Predseda: Ing. Martin Masár. Členovia: Mgr. Zuzana Jajcayová, Ing.
+            Peter Lenč, Ing. Martin Michlík, Ing. arch. Boris Schultz, Martin
+            Paško, Mgr. Ing. Anna Zemanová, Michal Mihálik.
+          </li>
+        </ul>
+      </section>
+
+      <section aria-labelledby="casova-os">
+        <h2 id="casova-os">Časová os</h2>
+        <div class="timeline">
+          <p>
+            <strong>13.10.2025</strong> -
+            <a
+              href="https://isvs.karlovaves.sk/publish/printDocument/1/12149"
+              target="_blank"
+              rel="noreferrer"
+              >Objednávka zmien POD</a
+            >
+            pre zónu Hlaváčiková-Veternicová, Silvánska, Nábelková.
+          </p>
+          <p>
+            <strong>24.11.2025</strong> -
+            <a
+              href="https://www.karlovaves.sk/wp-content/uploads/2026/02/Zapisnica-DZP-2025-11-24.pdf"
+              target="_blank"
+              rel="noreferrer"
+              >Zápisnica komisie</a
+            >: návrh vyhradiť približne 30 % miest.
+          </p>
+          <p>
+            <strong>02.02.2026</strong> -
+            <a
+              href="https://www.karlovaves.sk/wp-content/uploads/2026/02/Zapisnica-DZP-2026-02-02.pdf"
+              target="_blank"
+              rel="noreferrer"
+              >Zápisnica komisie</a
+            >: prerokovanie spôsobu prideľovania.
+          </p>
+          <p>
+            <strong>23.03.2026</strong> -
+            <a
+              href="https://www.karlovaves.sk/wp-content/uploads/2026/03/Pozvanka-DZP-2026-03-23.pdf"
+              target="_blank"
+              rel="noreferrer"
+              >Pozvánka na zasadnutie</a
+            >
+            k projektu organizácie dopravy a prideľovaniu miest.
+          </p>
+          <p>
+            <strong>31.03.2026</strong> -
+            <a
+              href="https://isvs.karlovaves.sk/publish/printDocument/1/12678"
+              target="_blank"
+              rel="noreferrer"
+              >Objednávka opravy povrchu parkoviska</a
+            >
+            na Hlaváčikovej a Veternicovej.
+          </p>
+        </div>
+      </section>
+
+      <section aria-labelledby="sektory">
+        <h2 id="sektory">Rozloženie parkovacích miest v sektoroch</h2>
+
+        <div>
+          <table>
+            <thead>
+              <tr>
+                <th>Sektor</th>
+                <th>Vyhr.+</th>
+                <th>Nevyhr.</th>
+                <th>Pomer</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>A</td>
+                <td>25</td>
+                <td>79</td>
+                <td>24,04 %</td>
+              </tr>
+              <tr>
+                <td>B</td>
+                <td>30</td>
+                <td>35</td>
+                <td>46,15 %</td>
+              </tr>
+              <tr>
+                <td>C</td>
+                <td>35</td>
+                <td>85</td>
+                <td>29,17 %</td>
+              </tr>
+              <tr>
+                <td>D</td>
+                <td>42</td>
+                <td>85</td>
+                <td>33,07 %</td>
+              </tr>
+              <tr>
+                <td>E</td>
+                <td>33</td>
+                <td>60</td>
+                <td>35,48 %</td>
+              </tr>
+              <tr>
+                <td>F</td>
+                <td>29</td>
+                <td>69</td>
+                <td>29,59 %</td>
+              </tr>
+              <tr>
+                <td>G</td>
+                <td>40</td>
+                <td>81</td>
+                <td>33,06 %</td>
+              </tr>
+              <tr>
+                <td>H</td>
+                <td>14</td>
+                <td>29</td>
+                <td>32,56 %</td>
+              </tr>
+              <tr>
+                <td>Spolu</td>
+                <td>248</td>
+                <td>523</td>
+                <td>32,17 %</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <figure>
+          <img
+            src="projekt2.png"
+            alt="Mapa sektorov parkovania na Hlaváčikovej a Veternicovej"
+          />
+          <figcaption>
+            Vizualizácia sektorov z podkladového projektu.
+            <a
+              href="https://www.karlovaves.sk/wp-content/uploads/2026/03/TDZ-Veternicova_VYHRADENE-PARKOVANIE_Aktualne.pdf"
+              target="_blank"
+              rel="noreferrer"
+              >Zdrojový dokument</a
+            >.
+          </figcaption>
+        </figure>
+      </section>
+    </main>
+  </body>
+</html>
